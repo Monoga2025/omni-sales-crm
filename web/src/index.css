@@ -1,0 +1,64 @@
+@import "@fontsource-variable/inter";
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+/* Dark is the default theme; `data-theme="light"` switches it. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif;
+  --color-accent: #196eff;
+  --animate-pop: pop 120ms ease-out;
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+/*
+ * Design tokens measured from a logged-in respond.io session (see odd/evidence/authenticated-ui-anatomy.md).
+ * Instead of rewriting every utility, the zinc scale is retuned per theme.
+ */
+:root[data-theme="dark"] {
+  --color-accent: #6ba4ff;
+  --color-zinc-950: #101113; /* app + rail background */
+  --color-zinc-900: #222225; /* panels */
+  --color-zinc-800: #38393c; /* 1px separators (rgba(182,188,195,.16) over panels) */
+  --color-zinc-700: #3e3e41; /* hover / raised */
+  --color-zinc-600: #525256;
+  --color-zinc-500: #808b99; /* icons, secondary */
+  --color-zinc-400: #97a0aa; /* text-secondary */
+  --color-zinc-300: #b6bcc3;
+  --color-zinc-200: #cfd3d8; /* text-primary */
+  --color-zinc-100: #dfe2e6;
+  --color-zinc-50: #f2f3f5;
+}
+:root[data-theme="light"] {
+  --color-zinc-50: #f2f2f3;
+  --color-zinc-100: #e5e5e7;
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  @apply bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+}
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -1px; border-radius: 4px; }
+
+/* thin, quiet scrollbars */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, currentColor 22%, transparent) transparent; }
+
+/* React Flow: align with the app palette */
+.react-flow { --xy-background-color: transparent; }
+.react-flow__attribution { display: none; }
+.react-flow__minimap { @apply rounded-md border border-zinc-200 dark:border-zinc-800; }
+.react-flow__controls { @apply rounded-md border border-zinc-200 shadow-none dark:border-zinc-800; }
+.react-flow__controls-button { @apply border-zinc-200 bg-white text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200; }
+.react-flow__controls-button svg { fill: currentColor; }
+.react-flow__handle { width: 8px; height: 8px; @apply border border-zinc-400 bg-white dark:border-zinc-500 dark:bg-zinc-900; }
