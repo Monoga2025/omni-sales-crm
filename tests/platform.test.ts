@@ -41,13 +41,13 @@ describe("NVIDIA provider (reply call + CRM analysis call, in parallel)", () => 
   it("writes the reply without tools and records the lead through one forced update_crm call", async () => {
     const { f, calls } = fakeFetch((c) =>
       isAnalysis(c)
-        ? analysisArgs({ name: "Ana Soto", email: "ana@x.co", interest: "blanqueamiento", tags: ["pidio-descuento"], score: 72, stage_name: "Negociación" })
+        ? analysisArgs({ name: "Ana Soto", email: "contacto009@example.com", interest: "blanqueamiento", tags: ["pidio-descuento"], score: 72, stage_name: "Negociación" })
         : completion({ content: "Hola Ana, claro que sí." }),
     );
-    const { id, r } = await run(f, "hola, soy Ana Soto, busco blanqueamiento, mi correo es ana@x.co");
+    const { id, r } = await run(f, "hola, soy Ana Soto, busco blanqueamiento, mi correo es contacto009@example.com");
     expect(r.reply).toBe("Hola Ana, claro que sí");
     const c = crm.getContact(id)!;
-    expect(c).toMatchObject({ name: "Ana Soto", email: "ana@x.co", score: 72 });
+    expect(c).toMatchObject({ name: "Ana Soto", email: "contacto009@example.com", score: 72 });
     expect(c.tags).toContain("pidio-descuento");
     expect(crm.getStage(c.stage_id)!.name).toBe("Negociación");
 
@@ -124,11 +124,11 @@ describe("NVIDIA provider (reply call + CRM analysis call, in parallel)", () => 
         ? completion({ content: null, tool_calls: [{ id: "x", type: "function", function: { name: "update_crm", arguments: "{not json" } }] })
         : completion({ content: "<think>razonando…</think>Perfecto Luis, sigo contigo." }),
     );
-    const { id, r } = await run(f, "Hola, me llamo Luis Vega, necesito un CRM. Mi correo es luis@vega.co", "Visitante 15");
+    const { id, r } = await run(f, "Hola, me llamo Luis Vega, necesito un CRM. Mi correo es contacto010@example.com", "Visitante 15");
     expect(r.reply).toBe("Perfecto Luis, sigo contigo");
     const c = crm.getContact(id)!;
     expect(c.name).toBe("Luis Vega");
-    expect(c.email).toBe("luis@vega.co");
+    expect(c.email).toBe("contacto010@example.com");
     expect(c.score).toBeGreaterThan(0);
   });
 
@@ -616,7 +616,7 @@ describe("web chat widget (public API)", () => {
 describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
   const waPayload = (text = "Hola, busco un CRM", id = "wamid.1") => ({
     object: "whatsapp_business_account",
-    entry: [{ changes: [{ value: { contacts: [{ profile: { name: "Ana Soto" }, wa_id: "573001112233" }], messages: [{ from: "573001112233", id, type: "text", text: { body: text } }] } }] }],
+    entry: [{ changes: [{ value: { contacts: [{ profile: { name: "Ana Soto" }, wa_id: "573005555008" }], messages: [{ from: "573005555008", id, type: "text", text: { body: text } }] } }] }],
   });
   const env = { WHATSAPP_TOKEN: "wa-token", WHATSAPP_PHONE_ID: "555", MESSENGER_PAGE_TOKEN: "pg-token", INSTAGRAM_PAGE_TOKEN: "ig-token", META_VERIFY_TOKEN: "verify-me" };
   const setup = (extraEnv: Record<string, string> = {}) => {
@@ -628,7 +628,7 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     app.request("/api/webhooks/meta", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
 
   it("parses WhatsApp, Messenger and Instagram payloads and ignores echoes and non-text", () => {
-    expect(parseMetaWebhook(waPayload())).toEqual([{ channel: "whatsapp", externalId: "573001112233", name: "Ana Soto", text: "Hola, busco un CRM", messageId: "wamid.1" }]);
+    expect(parseMetaWebhook(waPayload())).toEqual([{ channel: "whatsapp", externalId: "573005555008", name: "Ana Soto", text: "Hola, busco un CRM", messageId: "wamid.1" }]);
     expect(parseMetaWebhook({ object: "page", entry: [{ messaging: [{ sender: { id: "P1" }, message: { mid: "m1", text: "Hola" } }, { sender: { id: "P1" }, message: { mid: "m2", text: "eco", is_echo: true } }, { sender: { id: "P1" }, message: { mid: "m3", attachments: [{}] } }] }] })).toEqual([
       { channel: "messenger", externalId: "P1", name: undefined, text: "Hola", messageId: "m1" },
     ]);
@@ -650,12 +650,12 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     const res = await post(app, waPayload());
     expect(res.status).toBe(200);
     await crm.drain();
-    const c = crm.listContacts().find((x) => x.phone === "573001112233")!;
+    const c = crm.listContacts().find((x) => x.phone === "573005555008")!;
     expect(c.name).toBe("Ana Soto");
-    expect(c.phone).toBe("573001112233");
+    expect(c.phone).toBe("573005555008");
     const out = sent.calls.find((x) => x.url.includes("/555/messages"))!;
     expect(out.init.headers.Authorization).toBe("Bearer wa-token");
-    expect(out.body).toMatchObject({ messaging_product: "whatsapp", to: "573001112233", type: "text" });
+    expect(out.body).toMatchObject({ messaging_product: "whatsapp", to: "573005555008", type: "text" });
     expect(out.body.text.body.length).toBeGreaterThan(0);
     const ai = crm.messages(c.id).filter((m) => m.sender === "ai").at(-1)!;
     expect(ai.meta.delivery).toMatchObject({ status: "sent" });
@@ -667,9 +667,9 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     await crm.drain();
     await post(app, waPayload("Hola", "wamid.dup"));
     await crm.drain();
-    const c = crm.listContacts().find((x) => x.phone === "573001112233")!;
+    const c = crm.listContacts().find((x) => x.phone === "573005555008")!;
     expect(crm.messages(c.id).filter((m) => m.sender === "customer")).toHaveLength(1);
-    expect(crm.listContacts().filter((x) => x.phone === "573001112233")).toHaveLength(1);
+    expect(crm.listContacts().filter((x) => x.phone === "573005555008")).toHaveLength(1);
   });
 
   it("rejects bad signatures when META_APP_SECRET is configured and accepts a valid one", async () => {
@@ -681,7 +681,7 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     const good = await app.request("/api/webhooks/meta", { method: "POST", headers: { "content-type": "application/json", "x-hub-signature-256": sig }, body: raw });
     expect(good.status).toBe(200);
     await crm.drain();
-    expect(crm.listContacts().some((x) => x.phone === "573001112233")).toBe(true);
+    expect(crm.listContacts().some((x) => x.phone === "573005555008")).toBe(true);
   });
 
   it("routes Messenger and Instagram replies through /me/messages with the right page token", async () => {
@@ -698,7 +698,7 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     const { app, sent } = setup();
     await post(app, waPayload("quiero hablar con una persona real", "wamid.h"));
     await crm.drain();
-    const c = crm.listContacts().find((x) => x.phone === "573001112233")!;
+    const c = crm.listContacts().find((x) => x.phone === "573005555008")!;
     const before = sent.calls.length;
     await app.request(`/api/contacts/${c.id}/note`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ body: "no enviar esto" }) });
     await app.request(`/api/contacts/${c.id}/reply`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ body: "Hola Ana, soy Paula" }) });
@@ -713,7 +713,7 @@ describe("Meta channels (WhatsApp, Messenger, Instagram)", () => {
     const app = createApp(crm, localProvider, "nonexistent", { env, fetchImpl: failing.f });
     await post(app, waPayload("Hola", "wamid.f"));
     await crm.drain();
-    const c = crm.listContacts().find((x) => x.phone === "573001112233")!;
+    const c = crm.listContacts().find((x) => x.phone === "573005555008")!;
     const ai = crm.messages(c.id).filter((m) => m.sender === "ai").at(-1)!;
     expect(ai.meta.delivery).toMatchObject({ status: "failed" });
     expect(String((ai.meta.delivery as any).error)).toContain("token expired");
@@ -780,20 +780,20 @@ describe("Evolution API channel (read-only follow-up)", () => {
   const evo = (over: Record<string, unknown> = {}, key: Record<string, unknown> = {}) => ({
     event: "messages.upsert",
     instance: "loovo-ventas",
-    data: { key: { remoteJid: "573001112233@s.whatsapp.net", fromMe: false, id: "EVO1", ...key }, pushName: "Recepción Clínica Demo", message: { conversation: "Hola, buenos días, claro que sí" }, ...over },
+    data: { key: { remoteJid: "contacto011@example.com", fromMe: false, id: "EVO1", ...key }, pushName: "Recepción AURORA", message: { conversation: "Hola, buenos días, claro que sí" }, ...over },
   });
   const post = (app: ReturnType<typeof createApp>, body: unknown, headers: Record<string, string> = { "x-webhook-token": "tok" }) =>
     app.request("/api/webhooks/evolution", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
   const mk = (env: Record<string, string> = { EVOLUTION_WEBHOOK_TOKEN: "tok" }) => createApp(crm, localProvider, "nonexistent", { env });
 
   it("parses individual text messages, marks own ones and ignores group and non-text messages", () => {
-    expect(parseEvolutionWebhook(evo())).toEqual([{ channel: "whatsapp", externalId: "573001112233", name: "Recepción Clínica Demo", text: "Hola, buenos días, claro que sí", messageId: "EVO1" }]);
-    expect(parseEvolutionWebhook(evo({}, { fromMe: true }))).toEqual([{ channel: "whatsapp", externalId: "573001112233", name: undefined, text: "Hola, buenos días, claro que sí", messageId: "EVO1", fromMe: true }]);
-    expect(parseEvolutionWebhook(evo({}, { remoteJid: "1203@g.us" }))).toEqual([]);
+    expect(parseEvolutionWebhook(evo())).toEqual([{ channel: "whatsapp", externalId: "573005555008", name: "Recepción AURORA", text: "Hola, buenos días, claro que sí", messageId: "EVO1" }]);
+    expect(parseEvolutionWebhook(evo({}, { fromMe: true }))).toEqual([{ channel: "whatsapp", externalId: "573005555008", name: undefined, text: "Hola, buenos días, claro que sí", messageId: "EVO1", fromMe: true }]);
+    expect(parseEvolutionWebhook(evo({}, { remoteJid: "contacto012@example.com" }))).toEqual([]);
     expect(parseEvolutionWebhook(evo({ message: { imageMessage: {} } }))).toEqual([]);
     expect(parseEvolutionWebhook({ ...evo(), event: "connection.update" })).toEqual([]);
     expect(parseEvolutionWebhook(evo({ message: { extendedTextMessage: { text: "con link" } } }))[0]?.text).toBe("con link");
-    expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid", remoteJidAlt: "573009998877@s.whatsapp.net" }))[0]?.externalId).toBe("573009998877");
+    expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid", remoteJidAlt: "contacto013@example.com" }))[0]?.externalId).toBe("573005555011");
     expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid" }))).toEqual([]);
     expect(parseEvolutionWebhook(null)).toEqual([]);
   });
@@ -808,8 +808,8 @@ describe("Evolution API channel (read-only follow-up)", () => {
     const app = mk();
     expect((await post(app, evo())).status).toBe(200);
     await crm.drain();
-    const c = crm.findByExternal("whatsapp", "573001112233")!;
-    expect(c.name).toBe("Recepción Clínica Demo");
+    const c = crm.findByExternal("whatsapp", "573005555008")!;
+    expect(c.name).toBe("Recepción AURORA");
     const msgs = crm.messages(c.id);
     expect(msgs.map((m) => [m.sender, m.body])).toEqual([["customer", "Hola, buenos días, claro que sí"]]);
   });
@@ -820,23 +820,23 @@ describe("Evolution API channel (read-only follow-up)", () => {
     await post(app, evo());
     await post(app, evo({ message: { conversation: "segundo" } }, { id: "EVO2" }));
     await crm.drain();
-    const c = crm.findByExternal("whatsapp", "573001112233")!;
+    const c = crm.findByExternal("whatsapp", "573005555008")!;
     expect(crm.messages(c.id)).toHaveLength(2);
   });
 
   it("records only the allowed numbers when EVOLUTION_ALLOWED_NUMBERS is set (personal chats never enter the CRM)", async () => {
-    const app = mk({ EVOLUTION_WEBHOOK_TOKEN: "tok", EVOLUTION_ALLOWED_NUMBERS: "573001112233, 573001110000" });
+    const app = mk({ EVOLUTION_WEBHOOK_TOKEN: "tok", EVOLUTION_ALLOWED_NUMBERS: "573005555008, 573005550001" });
     await post(app, evo());
-    await post(app, evo({ pushName: "Familia" }, { remoteJid: "573229998877@s.whatsapp.net", id: "EVO9" }));
+    await post(app, evo({ pushName: "Familia" }, { remoteJid: "contacto014@example.com", id: "EVO9" }));
     await crm.drain();
-    expect(crm.findByExternal("whatsapp", "573001112233")).toBeDefined();
-    expect(crm.findByExternal("whatsapp", "573229998877")).toBeUndefined();
+    expect(crm.findByExternal("whatsapp", "573005555008")).toBeDefined();
+    expect(crm.findByExternal("whatsapp", "573005555012")).toBeUndefined();
   });
   it("ignores other instances when EVOLUTION_INSTANCE is set", async () => {
     const app = mk({ EVOLUTION_WEBHOOK_TOKEN: "tok", EVOLUTION_INSTANCE: "otra" });
     await post(app, evo());
     await crm.drain();
-    expect(crm.findByExternal("whatsapp", "573001112233")).toBeUndefined();
+    expect(crm.findByExternal("whatsapp", "573005555008")).toBeUndefined();
   });
 });
 

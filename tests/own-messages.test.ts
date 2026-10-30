@@ -6,7 +6,7 @@ import { createApp } from "../server/app.js";
 import { localProvider } from "../server/agent.js";
 import { parseEvolutionWebhook } from "../server/channels.js";
 
-const NUM = "573001112233";
+const NUM = "573005555008";
 const T0 = Date.UTC(2026, 9, 17, 14, 24); // 09:24 Colombia
 
 let crm: Crm;
@@ -18,7 +18,7 @@ beforeEach(() => {
 const evo = (id: string, text: string, fromMe: boolean, at: number, pushName = "Daniel") => ({
   event: "messages.upsert",
   instance: "loovo-ventas",
-  data: { key: { remoteJid: "118476756775100@lid", remoteJidAlt: `${NUM}@s.whatsapp.net`, fromMe, id }, pushName, message: { conversation: text }, messageTimestamp: Math.floor(at / 1000) },
+  data: { key: { remoteJid: "573005555009@lid", remoteJidAlt: `${NUM}@s.whatsapp.net`, fromMe, id }, pushName, message: { conversation: text }, messageTimestamp: Math.floor(at / 1000) },
 });
 
 describe("own WhatsApp messages (Evolution fromMe)", () => {
@@ -40,7 +40,7 @@ describe("own WhatsApp messages (Evolution fromMe)", () => {
   it("stores own messages as human, at the WhatsApp time, without sending them", async () => {
     const app = mk();
     expect((await post(app, evo("A1", "Hola, quiero botox", true, T0))).status).toBe(200);
-    await post(app, evo("B1", "Con quién tengo el gusto?", false, T0 + 10 * 60_000, "Recepción Clínica Demo"));
+    await post(app, evo("B1", "Con quién tengo el gusto?", false, T0 + 10 * 60_000, "Recepción AURORA"));
     await crm.drain();
     const contact = crm.findByExternal("whatsapp", NUM)!;
     expect(contact.name).toBe(`+${NUM}`); // own pushName is not the clinic's name
@@ -58,10 +58,10 @@ describe("own WhatsApp messages (Evolution fromMe)", () => {
     const app = mk();
     await post(app, evo("A1", "Hola", true, T0));
     await post(app, evo("A1", "Hola", true, T0));
-    await post(app, { ...evo("Z1", "personal", true, T0), data: { ...evo("Z1", "personal", true, T0).data, key: { remoteJid: "573009990000@s.whatsapp.net", fromMe: true, id: "Z1" } } });
+    await post(app, { ...evo("Z1", "personal", true, T0), data: { ...evo("Z1", "personal", true, T0).data, key: { remoteJid: "contacto008@example.com", fromMe: true, id: "Z1" } } });
     const contact = crm.findByExternal("whatsapp", NUM)!;
     expect(crm.messages(contact.id)).toHaveLength(1);
-    expect(crm.findByExternal("whatsapp", "573009990000")).toBeUndefined();
+    expect(crm.findByExternal("whatsapp", "573005555010")).toBeUndefined();
   });
 
   it("orders late-recorded messages by their time and keeps recency", async () => {

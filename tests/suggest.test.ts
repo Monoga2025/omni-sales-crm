@@ -16,7 +16,7 @@ const anthropicOk = (text: string) =>
   vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify({ content: [{ type: "text", text }] }), { status: 200 }));
 
 const chat = () => {
-  const c = crm.createContact({ name: "Demo", phone: "573001112233" });
+  const c = crm.createContact({ name: "AURORA", phone: "573005555008" });
   crm.patchContact(c.id, { handler: "human" });
   crm.addMessage(c.id, "human", "Hola, quiero botox en la frente", {}, { deliver: false });
   crm.addMessage(c.id, "customer", "¿Con quién tengo el gusto?");

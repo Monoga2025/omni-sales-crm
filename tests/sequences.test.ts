@@ -26,7 +26,7 @@ afterEach(() => vi.useRealTimers());
 
 const setup = (exit_on_reply = true) => {
   const seq = crm.createSequence({ name: "8 toques", exit_on_reply, steps: STEPS });
-  const contact = crm.createContact({ name: "Demo", phone: "573001112233" });
+  const contact = crm.createContact({ name: "AURORA", phone: "573005555008" });
   return { seq, contact };
 };
 
@@ -143,26 +143,26 @@ describe("sequences: task queue", () => {
   it("lists only active steps due until the given time, oldest first, with rendered text", () => {
     const { seq, contact } = setup();
     crm.setFields(contact.id, { apellido: "Cadena" }, "human");
-    const other = crm.createContact({ name: "Perla", phone: "573000000099" });
+    const other = crm.createContact({ name: "Aurea", phone: "573005550002" });
     const e1 = crm.enroll(contact.id, seq.id, "human");
     crm.completeStep(e1.id, "done", "human"); // next due tomorrow
     vi.setSystemTime(now + MIN);
     crm.enroll(other.id, seq.id, "human"); // due now + 1 min
 
     const today = crm.tasks(now + 2 * MIN);
-    expect(today.map((t) => t.contact.name)).toEqual(["Perla"]);
+    expect(today.map((t) => t.contact.name)).toEqual(["Aurea"]);
     expect(today[0]).toMatchObject({ step: { title: "Auditoría" }, step_number: 1, total_steps: 3, text: "Hola, quiero info" });
 
     const tomorrow = crm.tasks(now + 2 * DAY);
-    expect(tomorrow.map((t) => t.contact.name)).toEqual(["Perla", "Demo"]);
-    expect(tomorrow[1]!.text).toBe("Dr. Cadena, buenas");
+    expect(tomorrow.map((t) => t.contact.name)).toEqual(["Aurea", "AURORA"]);
+    expect(tomorrow[1]!.text).toBe("Dr. Vargas, buenas");
   });
 });
 
 describe("renderTemplate", () => {
   it("fills nombre and contact fields, and leaves unknown placeholders visible", () => {
     const c = { name: "Clínica X", fields: { apellido: "Reyes" } };
-    expect(renderTemplate("Hola {{nombre}}, Dra. {{apellido}} {{ tratamiento }}", c)).toBe("Hola Clínica X, Dra. Reyes {{tratamiento}}");
+    expect(renderTemplate("Hola {{nombre}}, Dra. {{apellido}} {{ tratamiento }}", c)).toBe("Hola Clínica X, Dra. Gil {{tratamiento}}");
   });
 });
 
@@ -181,7 +181,7 @@ describe("sequences: HTTP API", () => {
     expect((await call(app, "GET", "/api/sequences")).json).toHaveLength(1);
     expect((await call(app, "POST", "/api/sequences", { name: "x", steps: [] })).status).toBe(400);
 
-    const c = crm.createContact({ name: "Demo" });
+    const c = crm.createContact({ name: "AURORA" });
     expect((await call(app, "POST", `/api/contacts/${c.id}/enroll`, { sequence_id: created.json.id })).status).toBe(201);
     const blocked = await call(app, "PUT", `/api/sequences/${created.json.id}`, { steps: STEPS.slice(0, 1) });
     expect(blocked).toMatchObject({ status: 400, json: { error: "invalid: sequence has active enrollments" } });
@@ -192,28 +192,28 @@ describe("sequences: HTTP API", () => {
     const app = mkApp();
     const r = await call(app, "POST", "/api/contacts/bulk", {
       contacts: [
-        { name: "Demo", phone: "+57 300 000 0001", fields: { apellido: "Cadena" } },
-        { name: "Perla", phone: "+57 300 000 0002" },
+        { name: "AURORA", phone: "+57 300 555 0001", fields: { apellido: "Cadena" } },
+        { name: "Aurea", phone: "+57 300 555 0002" },
       ],
     });
     expect(r).toMatchObject({ status: 201, json: { created: 2, existing: 0 } });
-    const again = await call(app, "POST", "/api/contacts/bulk", { contacts: [{ name: "Demo otra vez", phone: "573001110000" }] });
+    const again = await call(app, "POST", "/api/contacts/bulk", { contacts: [{ name: "AURORA otra vez", phone: "573005550001" }] });
     expect(again.json).toMatchObject({ created: 0, existing: 1, ids: [r.json.ids[0]] });
-    const demo = crm.findByExternal("whatsapp", "573001110000")!;
-    expect(demo).toMatchObject({ name: "Demo", handler: "human", fields: { apellido: "Cadena" } });
+    const cime = crm.findByExternal("whatsapp", "573005550001")!;
+    expect(cime).toMatchObject({ name: "AURORA", handler: "human", fields: { apellido: "Cadena" } });
     expect((await call(app, "POST", "/api/contacts/bulk", { contacts: [{ name: "Sin número", phone: "" }] })).status).toBe(400);
   });
 
   it("a webhook reply attaches to the bulk-created contact and is timed by its enrollment", async () => {
     const app = createApp(crm, localProvider, "nonexistent", { env: { EVOLUTION_WEBHOOK_TOKEN: "tok" } });
-    const { json } = await call(app, "POST", "/api/contacts/bulk", { contacts: [{ name: "Demo", phone: "573001110000" }] });
+    const { json } = await call(app, "POST", "/api/contacts/bulk", { contacts: [{ name: "AURORA", phone: "573005550001" }] });
     const seq = crm.createSequence({ name: "8 toques", exit_on_reply: false, steps: STEPS });
     crm.enroll(json.ids[0], seq.id, "human");
     vi.setSystemTime(now + 5 * MIN);
     await app.request("/api/webhooks/evolution", {
       method: "POST",
       headers: { "content-type": "application/json", "x-webhook-token": "tok" },
-      body: JSON.stringify({ event: "messages.upsert", instance: "x", data: { key: { remoteJid: "573001110000@s.whatsapp.net", fromMe: false, id: "M1" }, pushName: "Recepción", message: { conversation: "Hola, buenos días" } } }),
+      body: JSON.stringify({ event: "messages.upsert", instance: "x", data: { key: { remoteJid: "contacto015@example.com", fromMe: false, id: "M1" }, pushName: "Recepción", message: { conversation: "Hola, buenos días" } } }),
     });
     expect(crm.activeEnrollment(json.ids[0])).toMatchObject({ first_reply_at: now + 5 * MIN });
   });
@@ -221,12 +221,12 @@ describe("sequences: HTTP API", () => {
   it("serves the task queue with a wa.me link and completes, skips and exits steps", async () => {
     const app = mkApp();
     const seq = crm.createSequence({ name: "8 toques", exit_on_reply: false, steps: STEPS });
-    const c = crm.createContact({ name: "Demo", phone: "573001110000" });
+    const c = crm.createContact({ name: "AURORA", phone: "573005550001" });
     const enrolled = await call(app, "POST", `/api/contacts/${c.id}/enroll`, { sequence_id: seq.id });
 
     const q = await call(app, "GET", `/api/tasks?until=${now + MIN}`);
     expect(q.json).toHaveLength(1);
-    expect(q.json[0]).toMatchObject({ text: "Hola, quiero info", wa_link: "https://wa.me/573001110000?text=Hola%2C%20quiero%20info", step_number: 1 });
+    expect(q.json[0]).toMatchObject({ text: "Hola, quiero info", wa_link: "https://wa.me/573005550001?text=Hola%2C%20quiero%20info", step_number: 1 });
 
     const done = await call(app, "POST", `/api/enrollments/${enrolled.json.id}/complete`, { note: "enviado 8:05" });
     expect(done.json).toMatchObject({ position: 1, status: "active" });
@@ -236,7 +236,7 @@ describe("sequences: HTTP API", () => {
     expect(exited.json).toMatchObject({ status: "exited", exit_reason: "Respondió por Instagram" });
     expect(await call(app, "POST", `/api/enrollments/${enrolled.json.id}/complete`)).toMatchObject({ status: 400, json: { error: "invalid: enrollment is not active" } });
 
-    const other = crm.createContact({ name: "Perla", phone: "573000000099" });
+    const other = crm.createContact({ name: "Aurea", phone: "573005550002" });
     const e2 = await call(app, "POST", `/api/contacts/${other.id}/enroll`, { sequence_id: seq.id });
     expect((await call(app, "POST", `/api/enrollments/${e2.json.id}/skip`)).json.position).toBe(1);
     expect(crm.events(other.id).find((x) => x.type === "sequence_step")!.data).toMatchObject({ outcome: "skipped" });

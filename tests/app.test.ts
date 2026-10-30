@@ -87,9 +87,9 @@ describe("AI agent (tool-calling)", () => {
     expect(d.contact.fields.interest).toContain("CRM");
     expect(d.contact.score).toBeGreaterThan(0);
 
-    await call("POST", `/api/contacts/${id}/inbound`, { body: "How much does it cost? My budget is $3000, email carlos@agency.io, I need it today" });
+    await call("POST", `/api/contacts/${id}/inbound`, { body: "How much does it cost? My budget is $3000, email contacto006@example.com, I need it today" });
     d = (await call("GET", `/api/contacts/${id}`)).json;
-    expect(d.contact.email).toBe("carlos@agency.io");
+    expect(d.contact.email).toBe("contacto006@example.com");
     expect(d.contact.tags).toEqual(expect.arrayContaining(["precio-consultado", "con-presupuesto", "urgente"]));
     expect(d.contact.budget_value).toBe(3000);
     expect(d.contact.score).toBeGreaterThanOrEqual(55);
@@ -111,7 +111,7 @@ describe("AI agent (tool-calling)", () => {
   it("closes the sale when the customer confirms purchase with enough signal, and never moves a Ganado lead back", async () => {
     const { json } = await call("POST", "/api/simulate/customer", { message: "Hola, me llamo Marta Díaz, busco un CRM" });
     const id = json.contact.id;
-    await call("POST", `/api/contacts/${id}/inbound`, { body: "Mi presupuesto es $2000, escribe a marta@mail.co, lo necesito hoy. Cuánto cuesta una demo?" });
+    await call("POST", `/api/contacts/${id}/inbound`, { body: "Mi presupuesto es $2000, escribe a contacto007@example.com, lo necesito hoy. Cuánto cuesta una demo?" });
     await call("POST", `/api/contacts/${id}/inbound`, { body: "Quiero comprar ahora" });
     expect(stageName(id)).toBe("Ganado");
     await call("POST", `/api/contacts/${id}/inbound`, { body: "hola de nuevo" });
