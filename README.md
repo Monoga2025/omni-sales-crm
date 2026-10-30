@@ -18,6 +18,11 @@ An omnichannel inbox with an AI sales agent, a Kanban pipeline, a flow builder, 
 - **AI:** a reply writer plus a CRM analyst. Providers sit behind a fallback chain (NVIDIA NIM, OpenAI, Anthropic). Without any AI key, a rule engine answers. It is for demos only.
 - **Guards:** deterministic checks in `server/guard.ts` rewrite or hand off a draft if it invents prices, schedules, payment links or guarantees. Prices and conditions come only from the knowledge base.
 
+Delivery safety modules (pure, injected clock/client, covered by tests; **not yet wired into the send path**):
+- `business-hours.ts`: Ley 2300 contact hours (Mon-Fri 07:00-19:00, Sat 08:00-15:00, never Sundays or Colombian holidays), with next open window.
+- `outbound-guard.ts`: blocks unresolved `{{field}}` / `[LINK_x]` markers (hands off to a human) and applies the hours guard; replies to someone who already wrote skip only the hours check.
+- `inbound-buffer.ts`: per-contact debounce that merges rapid-fire messages; in-memory store, or Redis via an injected client.
+
 Main modules in `server/`: `agent.ts`, `guard.ts`, `humanize.ts`, `channels.ts`, `widget.ts`, `funnels.ts`, `analytics.ts`, `crm.ts`, `db.ts`, `auth.ts`, `seed.ts`.
 
 ## Run it

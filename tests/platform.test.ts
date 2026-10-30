@@ -780,7 +780,7 @@ describe("Evolution API channel (read-only follow-up)", () => {
   const evo = (over: Record<string, unknown> = {}, key: Record<string, unknown> = {}) => ({
     event: "messages.upsert",
     instance: "loovo-ventas",
-    data: { key: { remoteJid: "contacto011@example.com", fromMe: false, id: "EVO1", ...key }, pushName: "Recepción AURORA", message: { conversation: "Hola, buenos días, claro que sí" }, ...over },
+    data: { key: { remoteJid: "573005555008@s.whatsapp.net", fromMe: false, id: "EVO1", ...key }, pushName: "Recepción AURORA", message: { conversation: "Hola, buenos días, claro que sí" }, ...over },
   });
   const post = (app: ReturnType<typeof createApp>, body: unknown, headers: Record<string, string> = { "x-webhook-token": "tok" }) =>
     app.request("/api/webhooks/evolution", { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
@@ -789,11 +789,11 @@ describe("Evolution API channel (read-only follow-up)", () => {
   it("parses individual text messages, marks own ones and ignores group and non-text messages", () => {
     expect(parseEvolutionWebhook(evo())).toEqual([{ channel: "whatsapp", externalId: "573005555008", name: "Recepción AURORA", text: "Hola, buenos días, claro que sí", messageId: "EVO1" }]);
     expect(parseEvolutionWebhook(evo({}, { fromMe: true }))).toEqual([{ channel: "whatsapp", externalId: "573005555008", name: undefined, text: "Hola, buenos días, claro que sí", messageId: "EVO1", fromMe: true }]);
-    expect(parseEvolutionWebhook(evo({}, { remoteJid: "contacto012@example.com" }))).toEqual([]);
+    expect(parseEvolutionWebhook(evo({}, { remoteJid: "1203@g.us" }))).toEqual([]);
     expect(parseEvolutionWebhook(evo({ message: { imageMessage: {} } }))).toEqual([]);
     expect(parseEvolutionWebhook({ ...evo(), event: "connection.update" })).toEqual([]);
     expect(parseEvolutionWebhook(evo({ message: { extendedTextMessage: { text: "con link" } } }))[0]?.text).toBe("con link");
-    expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid", remoteJidAlt: "contacto013@example.com" }))[0]?.externalId).toBe("573005555011");
+    expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid", remoteJidAlt: "573005555011@s.whatsapp.net" }))[0]?.externalId).toBe("573005555011");
     expect(parseEvolutionWebhook(evo({}, { remoteJid: "999@lid" }))).toEqual([]);
     expect(parseEvolutionWebhook(null)).toEqual([]);
   });
@@ -827,7 +827,7 @@ describe("Evolution API channel (read-only follow-up)", () => {
   it("records only the allowed numbers when EVOLUTION_ALLOWED_NUMBERS is set (personal chats never enter the CRM)", async () => {
     const app = mk({ EVOLUTION_WEBHOOK_TOKEN: "tok", EVOLUTION_ALLOWED_NUMBERS: "573005555008, 573005550001" });
     await post(app, evo());
-    await post(app, evo({ pushName: "Familia" }, { remoteJid: "contacto014@example.com", id: "EVO9" }));
+    await post(app, evo({ pushName: "Familia" }, { remoteJid: "573229998877@s.whatsapp.net", id: "EVO9" }));
     await crm.drain();
     expect(crm.findByExternal("whatsapp", "573005555008")).toBeDefined();
     expect(crm.findByExternal("whatsapp", "573005555012")).toBeUndefined();

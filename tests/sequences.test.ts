@@ -155,14 +155,14 @@ describe("sequences: task queue", () => {
 
     const tomorrow = crm.tasks(now + 2 * DAY);
     expect(tomorrow.map((t) => t.contact.name)).toEqual(["Aurea", "AURORA"]);
-    expect(tomorrow[1]!.text).toBe("Dr. Vargas, buenas");
+    expect(tomorrow[1]!.text).toBe("Dr. Cadena, buenas");
   });
 });
 
 describe("renderTemplate", () => {
   it("fills nombre and contact fields, and leaves unknown placeholders visible", () => {
     const c = { name: "Clínica X", fields: { apellido: "Reyes" } };
-    expect(renderTemplate("Hola {{nombre}}, Dra. {{apellido}} {{ tratamiento }}", c)).toBe("Hola Clínica X, Dra. Gil {{tratamiento}}");
+    expect(renderTemplate("Hola {{nombre}}, Dra. {{apellido}} {{ tratamiento }}", c)).toBe("Hola Clínica X, Dra. Reyes {{tratamiento}}");
   });
 });
 
@@ -213,7 +213,7 @@ describe("sequences: HTTP API", () => {
     await app.request("/api/webhooks/evolution", {
       method: "POST",
       headers: { "content-type": "application/json", "x-webhook-token": "tok" },
-      body: JSON.stringify({ event: "messages.upsert", instance: "x", data: { key: { remoteJid: "contacto015@example.com", fromMe: false, id: "M1" }, pushName: "Recepción", message: { conversation: "Hola, buenos días" } } }),
+      body: JSON.stringify({ event: "messages.upsert", instance: "x", data: { key: { remoteJid: "573005550001@s.whatsapp.net", fromMe: false, id: "M1" }, pushName: "Recepción", message: { conversation: "Hola, buenos días" } } }),
     });
     expect(crm.activeEnrollment(json.ids[0])).toMatchObject({ first_reply_at: now + 5 * MIN });
   });
