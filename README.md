@@ -2,9 +2,11 @@
 
 An omnichannel inbox with an AI sales agent, a Kanban pipeline, a flow builder, manual follow-up sequences and live analytics. It is single-tenant: one deployment serves one business, so each client gets its own instance.
 
+> Part of [Loovo](https://github.com/Monoga2025/loovo), an AI sales automation stack for aesthetic and dental clinics in Colombia. Built by [Daniel Monoga](https://github.com/Monoga2025).
+
 ## Screenshots
 
-![Omni Sales CRM: unified inbox across WhatsApp, Instagram, Messenger and web chat, with lifecycle stages and AI-assisted replies. Demo data is fictional.](../../docs/screenshots/crm-inbox.png)
+![Omni Sales CRM: unified inbox across WhatsApp, Instagram, Messenger and web chat, with lifecycle stages and AI-assisted replies. Demo data is fictional.](docs/screenshots/crm-inbox.png)
 
 *Omni Sales CRM: unified inbox across WhatsApp, Instagram, Messenger and web chat, with lifecycle stages and AI-assisted replies. Demo data is fictional.*
 
